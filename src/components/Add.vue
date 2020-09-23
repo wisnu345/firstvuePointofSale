@@ -8,15 +8,15 @@
         <div class="addform-box" @submit.prevent="sendData" enctype="multipart/form-data">
           <div>
             <label for="name">Name</label>
-            <input type="text" id="name" v-model="product_name"/>
+            <input type="text" id="name" required v-model="product_name"/>
           </div>
           <div>
-            <label for="name">Image</label>
-            <input type="file" id="image" @change="processFile($event)" />
+            <label for="name" >Image</label>
+            <input type="file" required id="image" @change="processFile($event)" />
           </div>
           <div>
             <label for="name">Price</label>
-            <input type="text" id="price" v-model="product_price" @keyup="show()"/>
+            <input type="text" id="price" required v-model="product_price" />
           </div>
           <div>
             <label for="category">Category</label>
@@ -27,8 +27,8 @@
         </div>
       </div>
       <div class="addbtn-area">
-        <button type="button" class="cancelbtn" @click="cancel()">Cancel</button>
-        <button type="submit" class="addbtn" @click="refresh()">Add</button>
+        <button type="button" class="cancelbtn" @click="cancel()" v-colorbtn="pinkcolor">Cancel</button>
+        <button type="submit" class="addbtn" v-colorbtn="bluecolor">Add</button>
       </div>
     </div>
     </form>
@@ -37,7 +37,9 @@
 </template>
 
 <script>
-const axios = require('axios')
+import functions from '../mixins/functions'
+const { mapActions, mapGetters } = require('vuex')
+const { url } = require('../helpers/env')
 
 export default {
   name: 'Add',
@@ -47,9 +49,11 @@ export default {
       product_name: null,
       category_id: null,
       product_price: null,
-      image: null
+      image: null,
+      url: url
     }
   },
+  mixins: [functions],
   watch: {
 
   },
@@ -65,7 +69,7 @@ export default {
     },
     show () {
       console.log(this.product_name)
-      console.log(typeof this.category_id)
+      console.log(this.category_id)
       console.log(this.product_price)
       console.log(this.image)
     },
@@ -73,26 +77,31 @@ export default {
       location.reload()
     },
     sendData () {
-      const formdata = new FormData()
-      formdata.append('product_name', this.product_name)
-      formdata.append('category_id', this.category_id)
-      formdata.append('product_price', this.product_price)
-      formdata.append('image', this.image)
-
-      axios.post('http://localhost:3000/products/insert', formdata)
-        .then((res) => {
-          console.log(res.data)
-        })
-        .catch((err) => {
-          console.log(err)
-        })
-    }
+      const dataFormdata = {
+        product_name: this.product_name,
+        category_id: this.category_id,
+        product_price: this.product_price,
+        image: this.image
+      }
+      this.onSendData(dataFormdata).then((response) => {
+      })
+    },
+    ...mapActions({
+      getcategory: 'category/getData',
+      onSendData: 'products/sendData'
+    })
   },
   mounted () {
-    axios
-      .get('http://localhost:3000/category/getallcategory')
-      .then((response) => this.setCategory(response.data.data))
-      .catch((err) => console.log('gagal : ', err))
+    this.getcategory()
+      .then((response) => {
+        this.setCategory(this.dataCategory)
+        console.log(this.categories)
+      })
+  },
+  computed: {
+    ...mapGetters({
+      dataCategory: 'category/getallDataCategory'
+    })
   }
 }
 </script>
@@ -177,6 +186,14 @@ div.detail-add div.addform-box {
   box-sizing: border-box;
   box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.25);
   border-radius: 10px;
+  padding: 0px 10px 0px 10px;
+}
+.addform-box div input[type="file"] {
+  min-width: -webkit-fill-available;
+  width: 50%;
+  height: auto;
+  align-self: center;
+  border-radius: 5px;
 }
 .addform-box div input#price {
   width: 70%;
@@ -211,13 +228,6 @@ div.addbtn-area button {
 div.addbtn-area button {
   text-decoration: none;
   opacity: 0.8;
-}
-div.addbtn-area button.addbtn {
-  background: #57cad5;
-  margin-left: 20px;
-}
-div.addbtn-area button.cancelbtn {
-  background: #f24f8a;
 }
 
 /* End of Add items */

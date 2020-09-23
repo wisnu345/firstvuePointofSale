@@ -1,29 +1,35 @@
 <template>
   <div>
-      <div class="top">
-        <div class="header">
-        <a href="#" class="menubtn" id="menubtn">
-            <img src="../assets/icons/menu.svg" />
+    <div class="top">
+      <div class="header">
+        <a href="" @click.prevent="opensidebar" class="menubtn" id="menubtn">
+          <img src="../assets/icons/menu.svg" />
         </a>
         <h3 class="brand-title">Food Items</h3>
         <a class="searchbtn" @click.self="popup">
-            <input type="text" @keyup="search" v-model="searchproduct" :style="{display:display}">
-            <img src="../assets/icons/search.svg" @click.self="popup"/>
+          <input type="text" @keyup="search" @keyup.enter="searchent" v-model="searchproduct" :style="{display:display}" />
+          <img src="../assets/icons/search.svg" @click.self="popup" />
         </a>
-        </div>
-        <div class="cart-header" id="cart-h">
+      </div>
+      <div class="cart-header" id="cart-h">
         <img src="../assets/icons/addcart.svg" />
         <h2>Cart</h2>
         <span class="counter">{{totalItem}}</span>
-        </div>
+      </div>
     </div>
+    <Sidebar/>
   </div>
 </template>
 
 <script>
+import functions from '../mixins/functions'
+import Sidebar from '@/components/Sidebar.vue'
+
 export default {
+  components: Sidebar,
   name: 'Header',
   props: ['totalItem'],
+  mixins: [functions],
   data () {
     return {
       searchproduct: '',
@@ -34,12 +40,21 @@ export default {
     search () {
       this.$emit('passSearch', this.searchproduct)
     },
+    searchent () {
+      this.$emit('passSearchent', this.searchproduct)
+    },
     popup () {
       if (this.display === 'inline-block') {
         this.display = 'none'
+        this.searchproduct = ''
+        this.search()
+        this.searchent()
       } else {
         this.display = 'inline-block'
       }
+    },
+    opensidebar () {
+      this.$emit('openSide')
     }
   },
   mounted () {
@@ -49,9 +64,9 @@ export default {
 </script>
 
 <style scoped>
-.top{
-    display: grid;
-    grid-template-columns: 8fr 4fr;
+.top {
+  display: grid;
+  grid-template-columns: 8fr 4fr;
 }
 .header {
   display: grid;
@@ -88,7 +103,7 @@ export default {
 }
 input {
   position: absolute;
-  right:50px;
+  right: 50px;
   top: 30% !important;
   border: 2px solid black;
   border-radius: 10px;
@@ -131,5 +146,15 @@ div.cart-header span {
 img {
   width: 30px;
   height: auto;
+}
+
+@media (max-width: 768px) {
+  #cart-h {
+    display: none !important;
+  }
+  .top {
+  display: grid;
+  grid-template-columns: auto;
+}
 }
 </style>

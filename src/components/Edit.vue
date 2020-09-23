@@ -21,7 +21,7 @@
           <div>
             <label for="category">Category</label>
             <select id="category" required v-model="category_id" >
-                <option  disabled selected="selected" value="">{{dataToEdit.category_name}}</option>
+                <option  disabled selected="selected">{{dataToEdit.category_name}}</option>
               <option :value="category.id" v-for="category in categories" :key="category.id">{{category.category_name}}</option>
             </select>
           </div>
@@ -38,7 +38,7 @@
 </template>
 
 <script>
-const axios = require('axios')
+import { mapActions, mapGetters } from 'vuex'
 
 export default {
   name: 'Add',
@@ -62,7 +62,6 @@ export default {
     },
     latestData (datadetail) {
       this.dataToEdit = datadetail
-      console.log(this.dataToEdit)
     },
     processFile (event) {
       this.image = event.target.files[0]
@@ -89,32 +88,37 @@ export default {
       } if (this.product_price == null) {
         this.product_price = this.dataToEdit.product_price
       }
-      const formdata = new FormData()
-      formdata.append('product_name', this.product_name)
-      formdata.append('category_id', this.category_id)
-      formdata.append('product_price', this.product_price)
-      formdata.append('image', this.image)
-
-      axios.patch(`http://localhost:3000/products/updatedetail/${this.dataToEdit.id}`, formdata)
-        .then((res) => {
-          console.log(res.data)
-        })
-        .catch((err) => {
-          console.log(err)
-        })
-    }
+      const dataFormdata = {
+        product_name: this.product_name,
+        category_id: this.category_id,
+        product_price: this.product_price,
+        image: this.image,
+        id: this.dataToEdit.id
+      }
+      this.onUpdateData(dataFormdata).then((response) => {
+      })
+    },
+    ...mapActions({
+      getcategory: 'category/getData',
+      getdetail: 'products/getDataDetail',
+      onUpdateData: 'products/updateData'
+    })
   },
   mounted () {
-    axios
-      .get('http://localhost:3000/category/getallcategory')
-      .then((response) => this.setCategory(response.data.data))
-      .catch((err) => console.log('gagal : ', err))
-
-    axios
-      .get(`http://localhost:3000/products/getdetail/${this.idtoedit}`)
-      .then((response) => this.latestData(response.data.data[0]))
-      .catch((err) => console.log('gagal : ', err))
-    // this.show()
+    this.getdetail(this.idtoedit)
+      .then(async (response) => {
+        await this.latestData(this.getdetaildata)
+      })
+    this.getcategory()
+      .then((response) => {
+        this.setCategory(this.dataCategory)
+      })
+  },
+  computed: {
+    ...mapGetters({
+      dataCategory: 'category/getallDataCategory',
+      getdetaildata: 'products/getdetail'
+    })
   }
 }
 </script>
@@ -185,6 +189,13 @@ div.detail-add div.addform-box {
   box-sizing: border-box;
   box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.25);
   border-radius: 10px;
+}
+.addform-box div input[type="file"] {
+  min-width: -webkit-fill-available;
+  width: 50%;
+  height: auto;
+  align-self: center;
+  border-radius: 5px;
 }
 .addform-box div input#price {
   width: 70%;

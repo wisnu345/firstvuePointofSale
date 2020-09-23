@@ -1,6 +1,9 @@
 <template>
   <div>
-    <Header @passSearch="search($event)" :totalItem="totalItem"/>
+    <Header @passSearch="search($event)" @passSearchent="searchenter($event)" @openSide="sideopen" :totalItem="totalItem"/>
+    <div v-if="sidebaropen">
+      <Sidebar @close="sideopen"/>
+    </div>
     <div class="main">
       <div class="submain">
         <div class="leftbar" id="leftbar">
@@ -15,8 +18,9 @@
           </a>
         </div>
         <div class="cards-area">
-          <div class="card-grid" v-for="product in products" :key="product.id">
-            <Cards :product="product" @coba="cobaco"
+          <div v-if="allproducts.loading">Loading ...</div>
+          <div v-else class="card-grid" v-for="product in products" :key="product.id">
+            <Cards :product="product" @coba="checklist"
             :listorder="listorders"
             @toDelete="rdtoDelete"
             @toEdit="rdtoEdit"
@@ -24,7 +28,7 @@
           </div>
         </div>
       </div>
-        <div :class="{outercart: true}" >
+        <div class="outercart" ref="cart">
           <div v-if="empty">
             <Empty />
           </div>
@@ -35,7 +39,7 @@
                 :key="index"
               >
                 <div class="img-listorder">
-                  <img :src="'http://localhost:3000/'+image" />
+                  <img :src="url+'/'+image" />
                 </div>
                 <div class="qty">
                   <h3>{{product_name}}</h3>
@@ -63,6 +67,7 @@
           </div>
         </div>
       <button type="button" class="btn" @click="popUpCartbtn()" id="cart">
+        <span>{{totalItem}}</span>
         <div v-if="imgCart">
           <img src="../assets/icons/cart.svg" />
         </div>
@@ -90,32 +95,36 @@
 </template>
 
 <script>
-import Header from '@/components/Header.vue'
+import Header from '@/components/Headerv.vue'
 import Empty from '@/components/Empty'
 import Checkout from '@/components/Checkout'
 import Cards from '@/components/Cards.vue'
 import Add from '@/components/Add'
 import Edit from '@/components/Edit'
+import { mapActions, mapGetters } from 'vuex'
+import functions from '../mixins/functions'
+import Sidebar from '@/components/Sidebar.vue'
 
-const axios = require('axios')
+const { url } = require('../helpers/env')
 
 export default {
   name: 'Main',
   props: ['searchkey'],
+  mixins: [functions],
   components: {
     Header,
     Cards,
     Checkout,
     Empty,
     Add,
-    Edit
+    Edit,
+    Sidebar
   },
   data () {
     return {
       products: [],
       listorders: [],
-      limit: 20,
-      display: 'block',
+      display: 'none',
       checkoutmodal: false,
       empty: true,
       orders: false,
@@ -127,7 +136,9 @@ export default {
       imgMenu: false,
       idtoedit: [],
       totalItem: 0,
-      tax: 0.1
+      tax: 0.1,
+      url: url,
+      sidebaropen: false
     }
   },
   methods: {
@@ -144,13 +155,12 @@ export default {
           this.totalItem += 1
         }
       })
-      console.log(this.listorders)
     },
-    cobaco (x) {
-      axios
-        .get(`http://localhost:3000/products/getdetail/${x}`)
-        .then((response) => this.setlistorder(response.data.data[0]))
-        .catch((err) => console.log('gagal : ', err))
+    checklist (x) {
+      this.getdetail(x)
+        .then(async (response) => {
+          await this.setlistorder(this.getdetaildata)
+        })
     },
     dec (index) {
       const databaru = this.listorders.map((e, i) => {
@@ -161,7 +171,6 @@ export default {
         return e
       })
       this.listorders = databaru
-      console.log(this.listorders)
     },
     inc (index) {
       const databaru = this.listorders.map((e, i) => {
@@ -172,10 +181,23 @@ export default {
         return e
       })
       this.listorders = databaru
-      console.log(this.listorders)
     },
+    // onCheckout () {
+    //   const order = {
+    //     invoice: '#wab123',
+    //     cashier: 'mamat',
+    //     amount: '500000',
+    //     detailorder: [{
+    //       product_name: '',
+    //       product_price: '',
+    //       qty: ''
+    //     }]
+    //   }
+
+    // },
     checkout () {
       this.checkoutmodal = true
+      console.log(this.listorders)
     },
     add () {
       this.addmodal = true
@@ -193,44 +215,43 @@ export default {
       this.editmodal = false
     },
     search (searchkey) {
-      axios
-        .get(
-          `http://localhost:3000/products/getall?limit=${this.limit}&name=${searchkey}`
-        )
-        .then((response) => this.setProduct(response.data.data))
-        .catch((err) => console.log('gagal : ', err))
+      this.getall(searchkey)
+        .then(() => {
+          this.setProduct(this.allproducts.products)
+        })
     },
-    popUpCartbtn () {
-      document.getElementById('cart').style.display = 'block'
-      // if (this.display === 'none') {
-      //   this.display = 'block'
-      //   this.imgMenu = true
-      //   this.imgCart = false
-      // } else {
-      //   this.imgCart = true
-      //   this.imgMenu = false
-      //   this.display = 'none'
-      // }
+    searchenter (searchkey = 'sa') {
+      this.getall(searchkey)
+        .then(() => {
+          this.setProduct(this.allproducts.products)
+        })
+      this.$router.push({ path: '/', query: { name: searchkey } })
     },
     refresh () {
       location.reload()
     },
     rdtoDelete (x) {
       if (confirm('are you sure?')) {
-        axios
-          .delete(
-          `http://localhost:3000/products/delete/${x}`
-          )
+        this.deletedata(x)
           .then((response) => {
-            console.log(response.data)
-            this.refresh()
+            alert(response)
+            this.getall()
+              .then((response) => {
+                this.setProduct(this.allproducts.products)
+              })
           })
-          .catch((err) => console.log('gagal : ', err))
       }
     },
     rdtoEdit (x) {
       this.editmodal = true
       this.idtoedit = x
+    },
+    sideopen () {
+      if (this.sidebaropen) {
+        this.sidebaropen = false
+      } else {
+        this.sidebaropen = true
+      }
     },
     deleteorder (index) {
       this.listorders.map((e, i) => {
@@ -244,17 +265,20 @@ export default {
         this.empty = true
         this.orders = false
       }
-      console.log(this.listorders)
-    }
-
+      this.checkmark = false
+    },
+    ...mapActions({
+      getall: 'products/getData',
+      refreshToken: 'auth/refreshToken',
+      getdetail: 'products/getDataDetail',
+      deletedata: 'products/deleteData'
+    })
   },
   mounted () {
-    axios
-      .get(
-        `http://localhost:3000/products/getall?limit=${this.limit}&name=${this.searchkey}&typesort=desc`
-      )
-      .then((response) => this.setProduct(response.data.data))
-      .catch((err) => console.log('gagal : ', err))
+    this.getall()
+      .then((response) => {
+        this.setProduct(this.allproducts.products)
+      })
   },
   computed: {
     subtotal: function () {
@@ -267,7 +291,11 @@ export default {
     },
     grandTotal: function () {
       return this.subtotal + this.taxtotal
-    }
+    },
+    ...mapGetters({
+      allproducts: 'products/getallData',
+      getdetaildata: 'products/getdetail'
+    })
   }
 }
 </script>
@@ -276,9 +304,7 @@ export default {
 .btn {
   display: none;
 }
-.hide{
-  display: none;
-}
+
 .main {
   display: grid;
   grid-template-columns: 8fr 4fr;
@@ -381,10 +407,7 @@ div.outercart {
   grid-template-columns: auto;
   grid-template-rows: minmax(50px, 100px);
   gap: 20px;
-}
-
-.cart-listorder {
-  height: 100px;
+  height: auto;
   background-color: #fff;
   display: flex;
   flex-direction: column;
@@ -504,69 +527,36 @@ div.img-listorder img {
     background-color: rgba(190, 195, 202, 0.3);
   }
 
-  div.outercart {
-    display: none;
-    height: 90vh;
-    overflow: scroll;
-    background-color: #fff;
-    position: fixed;
-    right: 0;
-    top: 70px;
-  }
   #cart-b {
     background-color: #fff;
     height: fit-content;
     width: 100%;
     z-index: 4;
-  }
-  #cart-b {
     right: 0;
     top: 70px;
   }
-  .cart-listorder {
-    grid-template-columns: auto;
-    grid-template-rows: minmax(50px, 100px);
-    gap: 20px;
-    height: 100px;
-    background-color: #fff;
-    flex-direction: column;
-    margin: 30px 10px 30px 30px;
+  .hide{
+  right: 0px !important;
+}
+  .outercart {
+    position: absolute;
+    right: -500px;
+    bottom: 0;
+    height: 90vh;
+    box-shadow: -6px -5px 8px rgba(0, 0, 0, 0.4);
   }
-  .cart-listorder div {
-    display: flex;
-  }
-  .cart-listorder div div.img-listorder {
-    display: flex;
-    flex: 1;
-    height: 100%;
-    width: 100%;
-    max-width: 100px;
-    border-radius: 5px 5px 5px 5px;
-    background-size: cover;
-    margin-right: 10px;
-  }
-
-  .cart-listorder div div.qty {
-    flex: 2;
-    display: grid;
-    grid-template-rows: 1fr 1fr;
-  }
-  .cart-listorder div div.qty h3 {
-    font-size: 20px;
-  }
-
   .cart-body {
     display: grid;
     grid-template-areas:
       "cart-listorder"
       "cart-footer";
-    grid-template-rows: 2.5fr 1fr;
+    grid-template-rows: 2fr 1fr;
   }
   .cart-listorder {
     grid-template-columns: auto;
     grid-template-rows: minmax(50px, 100px);
     gap: 20px;
-    height: 100px;
+    height: auto;
     background-color: #fff;
     flex-direction: column;
     margin: 30px 10px 30px 30px;
@@ -610,6 +600,19 @@ div.img-listorder img {
   .btn img {
     width: 30px;
     height: 30px;
+  }
+  .btn span{
+    background: #57cad5;
+    position: absolute;
+    top: -15px;
+    left: -15px;
+    border-radius: 10px;
+    height: 30px;
+    width: 30px;
+    color: white;
+    font-size: 20px;
+    font-weight: bolder;
+    box-shadow: 0px 3px 5px rgba(0, 0, 0, 0.4);
   }
 }
 </style>

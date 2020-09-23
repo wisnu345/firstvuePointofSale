@@ -5,7 +5,7 @@
       :class="{imgcard:true, selectedcard:selectedcard }"
       @click.prevent="classes()"
     >
-      <img :src="'http://localhost:3000/'+product.image" />
+      <img :src="url+'/'+product.image" />
     </div>
     <div class="body-card">
       <h5 class="title-card">{{product.product_name}}</h5>
@@ -23,27 +23,33 @@
 </template>
 
 <script>
-import Dotsmenu from '@/components/Dotsmenu'
+import functions from '../mixins/functions'
+
+const { url } = require('../helpers/env')
 
 export default {
   name: 'Cards',
-  components: Dotsmenu,
   props: ['product', 'listorders', 'seeCancelation'],
+  mixins: [functions],
   data () {
     return {
       selectedcard: false,
       lists: [],
       a: false,
-      display: 'none'
+      display: 'none',
+      url: url
     }
   },
   methods: {
     classes () {
-      if (!this.selectedcard) {
+      if (!this.checkmark) {
         this.selectedcard = true
         this.$emit('coba', this.product.id)
+        this.checkmark = true
+        // console.log(this.product)
       } else {
         this.selectedcard = false
+        this.checkmark = false
       }
     },
     fun () {
