@@ -37,7 +37,7 @@
         </div>
       </div>
       <div class="checkoutbtn-area">
-        <a href="#" class="print-btn">Print</a>
+        <a href="#" class="print-btn" @click="addHistory">Print</a>
         <p>Or</p>
         <a href="#" class="email-btn">Send Email</a>
       </div>
@@ -46,13 +46,41 @@
 </template>
 
 <script>
+const { mapActions } = require('vuex')
 export default {
   name: 'Checkout',
   props: ['taxTotal', 'grandTotal', 'listorders'],
   methods: {
     close () {
       this.$emit('close')
-    }
+    },
+    addHistory () {
+      const detail = this.listorders.map(e => {
+        const dataDetail = {
+          product_name: e.product_name,
+          qty: e.qnty,
+          product_price: e.product_price
+        }
+        return dataDetail
+      })
+      const data = {
+        invoice: `#${Math.random()}`,
+        cashier: 'Smith Small',
+        amount: this.grandTotal,
+        detailorder: detail
+      }
+      this.sendHistory(data)
+        .then(res => {
+          alert(res)
+          window.location.reload()
+        })
+    },
+    ...mapActions({
+      sendHistory: 'history/sendData'
+    })
+  },
+  mounted () {
+    // console.log(this.listorders)
   }
 }
 </script>

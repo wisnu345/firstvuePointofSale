@@ -19,11 +19,11 @@ const getters = {
 
 const actions = {
   login (context, payload) {
-    console.log(payload)
+    // console.log(payload)
     return new Promise((resolve, reject) => {
       axios.post(`${url}/users/login`, payload)
         .then((response) => {
-          console.log(response)
+          // console.log(response)
           if (response.code === 200) {
             localStorage.setItem('token', response.data.token)
             localStorage.setItem('refreshtoken', response.data.refreshToken)
@@ -44,7 +44,7 @@ const actions = {
     })
   },
   refreshToken (context, payload) {
-    console.log(payload)
+    // console.log(payload)
     return new Promise((resolve, reject) => {
       axios.post(`${url}/users/refreshtoken`, payload)
         .then((response) => {

@@ -33,9 +33,10 @@ export default {
     onLogin () {
       this.actionLogin(this.form)
         .then((response) => {
-          alert(response)
           if (response === 'Login success') {
             window.location = '/'
+          } else {
+            alert(response)
           }
         })
         .catch((err) => {

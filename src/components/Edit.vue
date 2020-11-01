@@ -29,7 +29,7 @@
       </div>
       <div class="addbtn-area">
         <button type="button" class="cancelbtn" @click="cancel()">Cancel</button>
-        <button type="submit" class="addbtn" @click="refresh()">Edit</button>
+        <button type="submit" class="addbtn">Edit</button>
       </div>
     </div>
     </form>
@@ -71,10 +71,10 @@ export default {
     },
     show () {
     //   console.log(this.idtoedit)
-      console.log(this.product_name)
-      console.log(this.category_id)
-      console.log(this.product_price)
-      console.log(this.image)
+      // console.log(this.product_name)
+      // console.log(this.category_id)
+      // console.log(this.product_price)
+      // console.log(this.image)
     //   console.log(this.dataToEdit)
     },
     refresh () {
@@ -96,6 +96,12 @@ export default {
         id: this.dataToEdit.id
       }
       this.onUpdateData(dataFormdata).then((response) => {
+        if (response.message === 'File too large') {
+          alert('Ukuran flie terlalu besar')
+        } else {
+          alert(response)
+        }
+        this.refresh()
       })
     },
     ...mapActions({

@@ -33,7 +33,6 @@ export default {
     onRegister () {
       this.actionLogin(this.form)
         .then((response) => {
-          alert(response)
           window.location = '/login'
         })
         .catch((err) => {

@@ -1,6 +1,6 @@
 <template>
   <div>
-    <Header @passSearch="search($event)" @passSearchent="searchenter($event)" @openSide="sideopen" :totalItem="totalItem"/>
+    <Header @passSearch="search($event)" @sorting="sort($event)" @passSearchent="searchenter($event)" @openSide="sideopen" :totalItem="totalItem"/>
     <div v-if="sidebaropen">
       <Sidebar @close="sideopen"/>
     </div>
@@ -8,13 +8,13 @@
       <div class="submain">
         <div class="leftbar" id="leftbar">
           <a  class="leftbarbtn">
-            <img src="../assets/icons/fork.svg" />
+            <img src="../assets/icons/fork.png" />
           </a>
           <router-link class="leftbarbtn" to="/history">
-            <img src="../assets/icons/clipboard.svg" />
+            <img src="../assets/icons/clipboard.png" />
           </router-link>
           <a href="#" class="leftbarbtn" @click="add()">
-            <img src="../assets/icons/add.svg" />
+            <img src="../assets/icons/add.png" />
           </a>
         </div>
         <div class="cards-area">
@@ -82,7 +82,7 @@
       </div>
       <div v-if="addmodal">
         <div class="screenblock">
-          <Add @sendcancel="canceladd" />
+          <Add @sendcancel="canceladd" @added="addss" />
         </div>
       </div>
       <div v-if="editmodal">
@@ -91,6 +91,7 @@
         </div>
       </div>
     </div>
+    <Paginations @setpage="paginasi($event)"/>
   </div>
 </template>
 
@@ -104,6 +105,7 @@ import Edit from '@/components/Edit'
 import { mapActions, mapGetters } from 'vuex'
 import functions from '../mixins/functions'
 import Sidebar from '@/components/Sidebar.vue'
+import Paginations from '@/components/Paginations.vue'
 
 const { url } = require('../helpers/env')
 
@@ -118,7 +120,8 @@ export default {
     Empty,
     Add,
     Edit,
-    Sidebar
+    Sidebar,
+    Paginations
   },
   data () {
     return {
@@ -138,7 +141,8 @@ export default {
       totalItem: 0,
       tax: 0.1,
       url: url,
-      sidebaropen: false
+      sidebaropen: false,
+      page: 1
     }
   },
   methods: {
@@ -197,7 +201,7 @@ export default {
     // },
     checkout () {
       this.checkoutmodal = true
-      console.log(this.listorders)
+      // console.log(this.listorders)
     },
     add () {
       this.addmodal = true
@@ -211,21 +215,48 @@ export default {
     canceladd () {
       this.addmodal = false
     },
+    addss () {
+      this.addmodal = false
+      this.getall()
+        .then((response) => {
+          this.setProduct(this.allproducts.products)
+        })
+    },
     canceledit () {
       this.editmodal = false
     },
     search (searchkey) {
-      this.getall(searchkey)
+      const datakey = {
+        name: searchkey,
+        page: this.page
+      }
+      this.getall(datakey)
         .then(() => {
           this.setProduct(this.allproducts.products)
         })
     },
-    searchenter (searchkey = 'sa') {
-      this.getall(searchkey)
+    searchenter (searchkey) {
+      const datakey = {
+        name: searchkey,
+        page: this.page
+      }
+      this.getall(datakey)
         .then(() => {
           this.setProduct(this.allproducts.products)
         })
       this.$router.push({ path: '/', query: { name: searchkey } })
+    },
+    paginasi (x) {
+      this.page = x
+      this.$router.push({ path: '/', query: { page: x } })
+      const datakey = {
+        page: this.page
+      }
+      this.getall(datakey)
+        .then((response) => {
+          this.setProduct(this.allproducts.products)
+          // console.log(this.allproducts.meta)
+        })
     },
     refresh () {
       location.reload()
@@ -272,12 +303,33 @@ export default {
       refreshToken: 'auth/refreshToken',
       getdetail: 'products/getDataDetail',
       deletedata: 'products/deleteData'
-    })
+    }),
+    sort (data) {
+      // console.log(data)
+      this.getall({
+        order: data.order,
+        typesort: data.typesort
+      })
+        .then(() => {
+          this.setProduct(this.allproducts.products)
+        })
+      this.$router.push({
+        path: '/',
+        query: {
+          order: data.order,
+          typesort: data.typesort
+        }
+      })
+    }
   },
   mounted () {
-    this.getall()
+    const datakey = {
+      page: this.page
+    }
+    this.getall(datakey)
       .then((response) => {
         this.setProduct(this.allproducts.products)
+        // console.log(this.allproducts.meta)
       })
   },
   computed: {
@@ -340,12 +392,13 @@ img {
   grid-template-columns: repeat(auto-fit, minmax(150px,200px));
   grid-template-rows: auto;
   gap: 30px;
-  height: 87vh;
+  height: calc(100vh - 130px);
   overflow: scroll;
   padding: 30px;
   justify-content: center;
     background-color: rgb(236, 236, 236);
     box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.25);
+  position: relative;
 
 }
 .cards-area::-webkit-scrollbar {
@@ -371,9 +424,10 @@ img {
 }
 /* cart body */
 div.outercart {
-  max-height: 90vh;
+  height: calc(100vh - 130px);
   overflow: scroll;
   background-color: #fff;
+  order: 2;
 }
 .outercart::-webkit-scrollbar {
   height: 0;
@@ -397,7 +451,7 @@ div.outercart {
   grid-template-areas:
     "cart-listorder"
     "cart-footer";
-  grid-template-rows: 2fr 1fr;
+  grid-template-rows: 2fr 300px;
   background-color: #fff;
 }
 

@@ -28,7 +28,7 @@
       </div>
       <div class="addbtn-area">
         <button type="button" class="cancelbtn" @click="cancel()" v-colorbtn="pinkcolor">Cancel</button>
-        <button type="submit" class="addbtn" v-colorbtn="bluecolor">Add</button>
+        <button type="submit" class="addbtn" v-colorbtn="bluecolor" >Add</button>
       </div>
     </div>
     </form>
@@ -68,10 +68,10 @@ export default {
       this.$emit('sendcancel')
     },
     show () {
-      console.log(this.product_name)
-      console.log(this.category_id)
-      console.log(this.product_price)
-      console.log(this.image)
+      // console.log(this.product_name)
+      // console.log(this.category_id)
+      // console.log(this.product_price)
+      // console.log(this.image)
     },
     refresh () {
       location.reload()
@@ -84,12 +84,25 @@ export default {
         image: this.image
       }
       this.onSendData(dataFormdata).then((response) => {
+        // this.refresh()
+        if (response.message === 'File too large') {
+          alert('Ukuran flie terlalu besar')
+        } else {
+          alert(response)
+          this.product_name = null
+          this.category_id = null
+          this.product_price = null
+          this.image = null
+        }
       })
     },
     ...mapActions({
       getcategory: 'category/getData',
       onSendData: 'products/sendData'
-    })
+    }),
+    added () {
+      this.$emit('added')
+    }
   },
   mounted () {
     this.getcategory()

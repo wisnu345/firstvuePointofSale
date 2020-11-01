@@ -5,7 +5,8 @@ const state = () => {
   return {
     all: {
       products: [],
-      loading: false
+      loading: false,
+      meta: {}
     },
     detail: []
   }
@@ -20,6 +21,9 @@ const mutations = {
   },
   SET_PRODUCTS_DETAIL (state, payload) {
     state.detail = payload
+  },
+  SET_META (state, payload) {
+    state.all.meta = payload
   }
 }
 
@@ -34,28 +38,47 @@ const getters = {
 
 const actions = {
   getData (context, payload) {
-    // console.log(payload)
     context.commit('SET_LOADING', true)
+    // console.log(payload)
     return new Promise((resolve, reject) => {
-      axios.get(`${url}/products/getall`, {
-        params: {
-          name: payload
-        }
-      })
-        .then((response) => {
-          context.commit('SET_PRODUCTS', response.data)
-          resolve(response.message)
+      if (payload) {
+        axios.get(`${url}/products/getall?`, {
+          params: {
+            name: payload.name,
+            page: payload.page,
+            orderby: payload.order,
+            typesort: payload.typesort
+          }
         })
-        .catch((err) => {
-          reject(err)
-        })
-        .finally(() => {
-          context.commit('SET_LOADING', false)
-        })
+          .then((response) => {
+            context.commit('SET_PRODUCTS', response.data)
+            context.commit('SET_META', response.meta)
+            resolve(response.message)
+          })
+          .catch((err) => {
+            reject(err)
+          })
+          .finally(() => {
+            context.commit('SET_LOADING', false)
+          })
+      } else {
+        axios.get(`${url}/products/getall?`)
+          .then((response) => {
+            context.commit('SET_PRODUCTS', response.data)
+            context.commit('SET_META', response.meta)
+            resolve(response.message)
+          })
+          .catch((err) => {
+            reject(err)
+          })
+          .finally(() => {
+            context.commit('SET_LOADING', false)
+          })
+      }
     })
   },
   sendData (context, payload) {
-    console.log(payload.image)
+    // console.log(payload.image)
     const formdata = new FormData()
     formdata.append('product_name', payload.product_name)
     formdata.append('category_id', payload.category_id)
@@ -64,6 +87,7 @@ const actions = {
     return new Promise((resolve, reject) => {
       axios.post(url + '/products/insert', formdata)
         .then((response) => {
+          // console.log(response)
           resolve(response.message)
         })
         .catch((err) => {
@@ -85,7 +109,7 @@ const actions = {
     })
   },
   updateData (context, payload) {
-    console.log(payload)
+    // console.log(payload)
     const formdata = new FormData()
     formdata.append('product_name', payload.product_name)
     formdata.append('category_id', payload.category_id)
@@ -94,6 +118,7 @@ const actions = {
     return new Promise((resolve, reject) => {
       axios.patch(url + `/products/updatedetail/${payload.id}`, formdata)
         .then((response) => {
+          // console.log(response)
           resolve(response.message)
         })
         .catch((err) => {
@@ -102,7 +127,7 @@ const actions = {
     })
   },
   deleteData (context, payload) {
-    console.log(payload)
+    // console.log(payload)
     return new Promise((resolve, reject) => {
       axios.delete(`${url}/products/delete/${payload}`)
         .then((response) => {

@@ -15,7 +15,7 @@
       <div class="main-page">
         <div class="leftbar" id="sidebar">
           <router-link to="/" class="leftbarbtn"
-            ><img src="../assets/icons/fork.svg"
+            ><img src="../assets/icons/fork.png"
           /></router-link>
         </div>
         <div class="history">
@@ -38,20 +38,12 @@
           </div>
           <div class="chart-line">
             <h3>Revenue</h3>
-            <select id="month" placeholder="Category" required>
-              <option value="" disabled selected class="option">Month</option>
-              <option value="#">January</option>
-              <option value="#">February</option>
-            </select>
-            <canvas id="chart_0"></canvas>
+            <div id="chart_0">
+              <Chart />
+            </div>
           </div>
           <div class="recordertable">
             <h3>Revenue</h3>
-            <select id="today" placeholder="Category" required>
-              <option value="" disabled selected class="option">Today</option>
-              <option value="#">Yesterday</option>
-              <option value="#">23 August 2020</option>
-            </select>
             <table class="table">
               <thead>
                 <tr>
@@ -63,12 +55,31 @@
                 </tr>
               </thead>
               <tbody>
-                <tr>
-                  <td scope="row">#10928</td>
-                  <td>Cashier 1</td>
-                  <td>06 Oct 2019</td>
-                  <td>Ice Tea, Salad With peanut sauce</td>
-                  <td>Rp. 120.000</td>
+                <tr v-for="hstry in history" :key="hstry.id + 'a'">
+                  <td scope="row">{{ hstry.invoice }}</td>
+                  <td>{{ hstry.cashier }}</td>
+                  <td>{{ hstry.date }}</td>
+                  <td>
+                    <div>
+                      <b-button id="show-btn" @click="detailOrder(hstry.id)">Detail</b-button>
+
+                      <b-modal id="modal-no-backdrop"
+                        hide-backdrop
+                        content-class="shadow" hide-footer>
+                        <template #modal-title>
+                          Orders
+                        </template>
+                        <div class="d-block text-center">
+                          <div v-for="(order,index) in orders" :key="index" class="d-flex justify-content-between">
+                            <p>{{order.product_name}}</p>
+                            <p>{{order.qty}}</p>
+                          </div>
+                        </div>
+                        <b-button class="mt-3" block @click="$bvModal.hide('modal-no-backdrop')">Close Me</b-button>
+                      </b-modal>
+                    </div>
+                  </td>
+                  <td>{{ hstry.amount }}</td>
                 </tr>
               </tbody>
             </table>
@@ -81,16 +92,21 @@
 
 <script>
 import Sidebar from '@/components/Sidebar.vue'
+import Chart from '@/components/Chart.vue'
+import { mapActions, mapGetters } from 'vuex'
 
 export default {
   name: 'Home',
   data () {
     return {
-      sidebaropen: false
+      sidebaropen: false,
+      dataHistory: {},
+      orders: []
     }
   },
   components: {
-    Sidebar
+    Sidebar,
+    Chart
   },
   methods: {
     sideopen () {
@@ -99,7 +115,29 @@ export default {
       } else {
         this.sidebaropen = true
       }
+    },
+    ...mapActions({
+      getAllhistory: 'history/getData',
+      gethistory: 'history/getHistory'
+    }),
+    detailOrder (x) {
+      const detail = this.allHistory.filter((e) => e.id_transaction === x)
+      this.orders = detail
+      this.$bvModal.show('modal-no-backdrop')
     }
+  },
+  mounted () {
+    this.getAllhistory().then((response) => {
+      this.dataHistory = this.allHistory
+    })
+    this.gethistory().then((response) => {
+    })
+  },
+  computed: {
+    ...mapGetters({
+      allHistory: 'history/getallData',
+      history: 'history/getHistory'
+    })
   }
 }
 </script>
@@ -204,7 +242,7 @@ img {
   width: auto;
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  grid-template-rows: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-rows: repeat(auto-fit, minmax(100px, 1fr));
   gap: 20px;
   margin: 20px;
 }
@@ -281,26 +319,11 @@ img {
   grid-area: revenue;
   align-self: end;
 }
-.chart-line select#month:required {
-  width: 20%;
-  height: 50%;
-  grid-area: month;
-  margin: 20px 20px 0px 0px;
-  display: flex;
-  place-self: end;
-  border-radius: 15px;
-  background-color: #cecece;
-  border: 0px;
-  color: black;
-}
 
-canvas {
+.chart-line div#chart_0 {
   grid-area: canvas;
   background: #ffffff;
   border-radius: 10px;
-  max-height: 500px;
-  width: 100%;
-  overflow: scroll;
 }
 
 .recordertable {
@@ -345,7 +368,7 @@ table {
   overflow: scroll;
 }
 tbody td {
-  color: #cecece;
+  color: #080808;
 }
 
 /*end chart JS */

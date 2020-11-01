@@ -10,6 +10,16 @@
           <input type="text" @keyup="search" @keyup.enter="searchent" v-model="searchproduct" :style="{display:display}" />
           <img src="../assets/icons/search.svg" @click.self="popup" />
         </a>
+        <span class="position-relative d-flex justify-content-center align-items-center " @click="fun">
+          <img src="../assets/icons/more.svg" />
+          <!-- <div>Menu</div> -->
+          <div class="dropdownmenu" :style="{display: displaya}">
+            <a @click="sort('product_name', 'asc')"> Name a-z</a>
+            <a @click="sort('product_name', 'desc')">Name z-a</a>
+            <a @click="sort('product_price', 'asc')"> Price 0-9</a>
+            <a @click="sort('product_price', 'desc')">Price 9-0</a>
+          </div>
+        </span>
       </div>
       <div class="cart-header" id="cart-h">
         <img src="../assets/icons/addcart.svg" />
@@ -17,23 +27,22 @@
         <span class="counter">{{totalItem}}</span>
       </div>
     </div>
-    <Sidebar/>
   </div>
 </template>
 
 <script>
 import functions from '../mixins/functions'
-import Sidebar from '@/components/Sidebar.vue'
+import { mapActions } from 'vuex'
 
 export default {
-  components: Sidebar,
   name: 'Header',
   props: ['totalItem'],
   mixins: [functions],
   data () {
     return {
       searchproduct: '',
-      display: 'none'
+      display: 'none',
+      displaya: 'none'
     }
   },
   methods: {
@@ -49,16 +58,33 @@ export default {
         this.searchproduct = ''
         this.search()
         this.searchent()
+        this.$router.push(this.$route.path)
       } else {
         this.display = 'inline-block'
       }
     },
     opensidebar () {
       this.$emit('openSide')
+    },
+    sort (a, b) {
+      this.$emit('sorting', {
+        order: a,
+        typesort: b
+      })
+    },
+    ...mapActions({
+      getAll: 'products/getData'
+    }),
+    fun () {
+      if (this.displaya === 'none') {
+        this.displaya = 'flex'
+      } else {
+        this.displaya = 'none'
+      }
     }
   },
   mounted () {
-    console.log(this.totalItem)
+    // console.log(this.totalItem)
   }
 }
 </script>
@@ -70,7 +96,7 @@ export default {
 }
 .header {
   display: grid;
-  grid-template-columns: 80px auto 100px;
+  grid-template-columns: 80px auto 50px 50px;
   grid-template-rows: 80px;
   height: auto;
   grid-template-areas: "menu brand-title search";
@@ -148,6 +174,22 @@ img {
   height: auto;
 }
 
+.dropdownmenu {
+  z-index: 99;
+  flex-direction: column;
+  position: absolute;
+  min-width: 100px;
+  background-color: white;
+  border: 1px solid black;
+  top: 55px;
+  right: 0;
+  padding: 5px;
+}
+
+.dropdownmenu a:hover{
+  background-color: black;
+  color: white !important;
+}
 @media (max-width: 768px) {
   #cart-h {
     display: none !important;
