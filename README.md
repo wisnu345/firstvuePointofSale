@@ -51,4 +51,8 @@ Unit Testing adalah pengujian sebuah fungsi, kelas, interface, prosedur dari se
 
 #### About
 
-This is application interface I rebuilt from my responsive-web, I used Vue JS & Vuex in this project, and i've also connected this app interface with the backend i post last week. This project is not done yet, but hopefully i can solved this as soon as possible.
+This is an application built to help in stores especially FnB stores. This application displays a list of items in sales, items in the list can be selected to add to cart, then can be checked out for purchases.
+In this application there is also a history that displays a list of items that have been sold with tables and charts
+user also can add more items, edit or delete.
+other features in this application, includes search, sort, pagination.
+This application built used Vue, and express Js. 
